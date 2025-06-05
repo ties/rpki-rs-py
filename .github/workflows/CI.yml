@@ -24,7 +24,6 @@ jobs:
     strategy:
       matrix:
         platform:
-          # Use 24.04 because ring does not compile on older clang on aarch64 
           - runner: ubuntu-24.04
             target: x86_64
           - runner: ubuntu-24.04
@@ -40,7 +39,8 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
+          # https://github.com/PyO3/maturin-action/issues/222
+          manylinux: '2.28'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
