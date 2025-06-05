@@ -38,5 +38,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
+      - name: Install maturin
+        run: uv tool install maturin
       - name: Test with python ${{ matrix.python-version }}
         run: uv run --frozen pytest 
