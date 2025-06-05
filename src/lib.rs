@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use num_bigint::BigInt;
 use pyo3::prelude::*;
-use rpki::{repository::{sigobj::SignedObject, Manifest}, util::hex};
+use rpki::repository::sigobj::SignedObject;
 
 #[pyclass(frozen, eq, hash)]
 #[derive(Clone, PartialEq, Hash)]
@@ -9,7 +9,7 @@ use rpki::{repository::{sigobj::SignedObject, Manifest}, util::hex};
 struct FileAndHash {
     /// The file name.
     #[pyo3(get)]
-    name: String,
+    file: String,
     /// The file hash.
     #[pyo3(get)]
     hash: Vec<u8>,
@@ -19,8 +19,8 @@ struct FileAndHash {
 impl FileAndHash {
     fn __repr__(&self) -> String {
         let mut buf = [0u8; 256/4];
-        let hex_str = hex::encode(&self.hash, &mut buf);
-        format!("FileAndHash(file={}, hash={})", self.name, hex_str)
+        let hex_str = rpki::util::hex::encode(&self.hash, &mut buf);
+        format!("FileAndHash(file={}, hash={})", self.file, hex_str)
     }
 }
 
@@ -39,9 +39,9 @@ impl FileAndHash {
 /// Files and hashes:         1: F43VHX5As0tDn4_fTQUUEcU0cuo.crl (hash: V7e8KEOIOLS0abcZBUFNanWqhhrWh/xmpE1SaNHx8JE=)
 ///                           2: sY0r0y4AruQYBO-qa1jtodSMRJI.roa (hash: fgiZ0pPukyfp5f/cG9pJMs5XjY+lIWQ3prMocyZ72Vo=)
 /// Validation:               Failed, unable to get local issuer certificate
-#[pyclass(frozen, eq, hash)]
+#[pyclass(frozen, eq, hash, sequence)]
 #[derive(PartialEq, Hash)]
-struct RpkiManifest {
+struct Manifest {
     #[pyo3(get)]
     ski: Vec<u8>,
     #[pyo3(get)]
@@ -64,15 +64,15 @@ struct RpkiManifest {
 }
 
 #[pymethods]
-impl RpkiManifest {
+impl Manifest {
     #[staticmethod]
-    fn from_content(content: &[u8]) -> Option<RpkiManifest> {
+    fn from_content(content: &[u8]) -> Option<Manifest> {
         let signing_time = match SignedObject::decode(content, false) {
             Ok(signed_object)  => signed_object.signing_time().map(|t| t.to_utc()),
             Err(_) => return None,
         };
 
-        if let Ok(mft) = Manifest::decode(content, false) {
+        if let Ok(mft) = rpki::repository::Manifest::decode(content, false) {
             let cert = mft.cert();
             let ski = cert.subject_key_identifier().as_slice().to_vec();
 
@@ -84,14 +84,14 @@ impl RpkiManifest {
             let file_list: Vec<FileAndHash> = mft.content().iter().map(|entry|
                 FileAndHash {
                     // Convert &Bytes to String using std::str::from_utf8 and to_string
-                    name: std::str::from_utf8(entry.file().as_ref())
+                    file: std::str::from_utf8(entry.file().as_ref())
                         .unwrap_or_default()
                         .to_string(),
                     hash: entry.hash().to_vec(),
             }).collect();
 
 
-            return Some(RpkiManifest {
+            return Some(Manifest {
                 ski,
                 signing_time,
                 this_update: mft.this_update().to_utc(),
@@ -103,6 +103,18 @@ impl RpkiManifest {
             });
         }
         None
+    }
+
+    fn __len__(&self) -> usize {
+        self.file_list.len()
+    }
+
+    fn __getitem__(&self, index: usize) -> PyResult<FileAndHash> {
+        if index < self.file_list.len() {
+            Ok(self.file_list[index].clone())
+        } else {
+            Err(pyo3::exceptions::PyIndexError::new_err("Index out of range"))
+        }
     }
 }
 
@@ -124,6 +136,6 @@ fn cms_signing_time(content: &[u8]) -> PyResult<Option<i64>> {
 #[pymodule]
 fn rpki_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(cms_signing_time, m)?)?;
-    m.add_class::<RpkiManifest>()?;
+    m.add_class::<Manifest>()?;
     Ok(())
 }
