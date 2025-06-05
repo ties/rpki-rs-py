@@ -39,8 +39,8 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          # https://github.com/PyO3/maturin-action/issues/222
-          manylinux: '2.28'
+          # https://github.com/PyO3/maturin-action/issues/222 -> https://github.com/pypa/manylinux for supported options
+          manylinux: manylinux_2_34
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
