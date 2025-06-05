@@ -45,6 +45,9 @@ struct Manifest {
     #[pyo3(get)]
     ski: Vec<u8>,
     #[pyo3(get)]
+    aki: Option<Vec<u8>>,
+    // skip the issuer: The issuer name is nested in a x509 structure, with rpki-rs not providing a tool to get just the CN.
+    #[pyo3(get)]
     signing_time: Option<DateTime<Utc>>,
     #[pyo3(get)]
     this_update: DateTime<Utc>,
@@ -75,11 +78,12 @@ impl Manifest {
         if let Ok(mft) = rpki::repository::Manifest::decode(content, false) {
             let cert = mft.cert();
             let ski = cert.subject_key_identifier().as_slice().to_vec();
+            let aki = cert.authority_key_identifier().map(|aki| aki.as_slice().to_vec());
 
             let issuer_aia = cert.ca_issuer().map(|issuer| issuer.to_string());
-            let mft_sia = cert.rpki_manifest().map(|sia| sia.to_string());
+            let mft_sia = cert.signed_object().map(|sia| sia.to_string());
 
-            let manifest_number = BigInt::from_bytes_le(num_bigint::Sign::NoSign, &mft.content().manifest_number().into_array());
+            let manifest_number = BigInt::from_bytes_be(num_bigint::Sign::Plus, &mft.content().manifest_number().into_array());
 
             let file_list: Vec<FileAndHash> = mft.content().iter().map(|entry|
                 FileAndHash {
@@ -93,6 +97,7 @@ impl Manifest {
 
             return Some(Manifest {
                 ski,
+                aki,
                 signing_time,
                 this_update: mft.this_update().to_utc(),
                 next_update: mft.next_update().to_utc(),

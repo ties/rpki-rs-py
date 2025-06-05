@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Sequence
 
 
 class FileAndHash:
@@ -12,14 +12,14 @@ class FileAndHash:
     hash: bytes
     """The file hash."""
 
-class Manifest:
+class Manifest(Sequence[FileAndHash]):
     """
     Represents a RPKI manifest.
     """
     ski: bytes
     """Subject key identifier."""
     
-    signing_time: Optional[datetime]
+    signing_time: datetime | None
     """The signing time of the manifest."""
     
     this_update: datetime
@@ -28,37 +28,32 @@ class Manifest:
     next_update: datetime
     """The time of the next manifest update."""
     
-    aia: Optional[str]
+    aia: str | None
     """Authority Information Access URI."""
     
-    sia: Optional[str]
+    sia: str | None
     """Subject Information Access URI."""
     
     manifest_number: int
     """The manifest number."""
     
-    file_list: List[FileAndHash]
+    file_list: list[FileAndHash]
     """List of files and their hashes included in the manifest."""
     
-    # Alias for file_list for backward compatibility based on test usage
-    @property
-    def file_list(self) -> List[FileAndHash]:
-        pass
-    
     @staticmethod
-    def from_content(content: bytes) -> Optional['RpkiManifest']:
+    def from_content(content: bytes) -> Manifest | None:
         """
-        Create a RpkiManifest from raw content bytes.
+        Create a Manifest from raw content bytes.
         
         Args:
             content: The raw manifest content.
             
         Returns:
-            An RpkiManifest instance or None if parsing fails.
+            An Manifest instance or None if parsing fails.
         """
-        pass
+        ...
 
-def cms_signing_time(content: bytes) -> Optional[int]:
+def cms_signing_time(content: bytes) -> int | None:
     """
     Extract the signing time from a CMS signed object.
     
@@ -68,4 +63,4 @@ def cms_signing_time(content: bytes) -> Optional[int]:
     Returns:
         The signing time as a Unix timestamp (seconds since epoch) or None if not present.
     """
-    pass
+    ...
