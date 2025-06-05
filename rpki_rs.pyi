@@ -18,6 +18,9 @@ class Manifest(Sequence[FileAndHash]):
     """
     ski: bytes
     """Subject key identifier."""
+
+    aki: bytes
+    """Authority key identifier."""
     
     signing_time: datetime | None
     """The signing time of the manifest."""
