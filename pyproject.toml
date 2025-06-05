@@ -3,7 +3,7 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "rpki-rs-py"
+name = "rpki-rs"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
@@ -16,5 +16,6 @@ features = ["pyo3/extension-module"]
 
 [dependency-groups]
 dev = [
+    "ipdb>=0.13.13",
     "pytest>=8.3.5",
 ]

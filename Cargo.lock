@@ -166,6 +166,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-bigint"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
+dependencies = [
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-integer"
+version = "0.1.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,9 +221,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5203598f366b11a02b13aa20cab591229ff0a89fd121a308a5df751d5fc9219"
 dependencies = [
  "cfg-if",
+ "chrono",
  "indoc",
  "libc",
  "memoffset",
+ "num-bigint",
  "once_cell",
  "portable-atomic",
  "pyo3-build-config",
@@ -298,9 +319,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "rpki-rs-py"
+name = "rpki-rs"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "num-bigint",
  "pyo3",
  "rpki",
 ]
