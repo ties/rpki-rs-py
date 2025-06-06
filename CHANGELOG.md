@@ -2,7 +2,7 @@
 
 ---
 
-## v0.0.1, 2025-06-06
+## v0.1.0, 2025-06-06
 
 - parsing of manifest
 - parsing of signing time from generic RPKI signed objects
