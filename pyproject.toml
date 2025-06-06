@@ -19,6 +19,5 @@ cache-keys = [{file = "pyproject.toml"}, {file = "Cargo.toml"}, {file = "**/*.rs
 
 [dependency-groups]
 dev = [
-    "ipdb>=0.13.13",
     "pytest>=8.3.5",
 ]
