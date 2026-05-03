@@ -23,6 +23,14 @@ impl ParsedRpkiObject {
     }
 }
 
+/// Parse the `data` as an RPKI object with the given name.
+/// 
+/// # Arguments
+/// 
+/// * `filename` - name of the file.
+/// * `data` - content of the file.
+/// 
+/// 
 fn parse_blob(filename: &str, data: &[u8]) -> Result<ParsedRpkiObject, anyhow::Error> {
     let file_type = RpkiObjectType::from_str(filename)
         .map_err(|e| anyhow!(e))?;
@@ -43,7 +51,11 @@ fn parse(py: Python<'_>, filename: &str, data: &[u8]) -> PyResult<Py<PyAny>> {
 }
 
 
-/// Extract the signing time from a CMS signed object.
+/// Returns the signing time from a CMS signed object.
+/// 
+/// # Arguments
+/// 
+/// * `content` - The raw CMS content
 #[pyfunction]
 fn cms_signing_time(content: &[u8]) -> PyResult<Option<i64>> {
     // Placeholder for CMS signing time functionality

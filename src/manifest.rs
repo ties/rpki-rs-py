@@ -68,6 +68,11 @@ pub struct Manifest {
 
 #[pymethods]
 impl Manifest {
+    /// Creates and returns a manifest from raw content bytes.
+    /// 
+    /// # Arguments:
+    /// 
+    /// * `content` - the raw bytes of the Manifest
     #[staticmethod]
     pub(crate) fn from_content(content: &[u8]) -> Option<Manifest> {
         let signing_time = match SignedObject::decode(content, false) {
