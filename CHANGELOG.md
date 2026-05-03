@@ -1,6 +1,9 @@
 # Changelog
 
 ---
+## v0.1.1, 2026-xx-yy
+
+- update dependencies (use rpki 0.19.2)
 
 ## v0.1.0, 2025-06-06
 

@@ -21,7 +21,7 @@ jobs:
         platform:
           - runner: ubuntu-24.04
             target: x86_64
-        python-version: ["3.13"]
+        python-version: ["3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

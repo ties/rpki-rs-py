@@ -3,7 +3,7 @@ use num_bigint::BigInt;
 use pyo3::prelude::*;
 use rpki::repository::sigobj::SignedObject;
 
-#[pyclass(frozen, eq, hash)]
+#[pyclass(skip_from_py_object,frozen, eq, hash)]
 #[derive(Clone, PartialEq, Hash)]
 /// Represents a file in a RPKI manifest.
 struct FileAndHash {
@@ -48,7 +48,7 @@ struct Manifest {
     aki: Option<Vec<u8>>,
     // skip the issuer: The issuer name is nested in a x509 structure, with rpki-rs not providing a tool to get just the CN.
     #[pyo3(get)]
-    signing_time: Option<DateTime<Utc>>,
+    signing_time: DateTime<Utc>,
     #[pyo3(get)]
     this_update: DateTime<Utc>,
     #[pyo3(get)]
@@ -71,7 +71,7 @@ impl Manifest {
     #[staticmethod]
     fn from_content(content: &[u8]) -> Option<Manifest> {
         let signing_time = match SignedObject::decode(content, false) {
-            Ok(signed_object)  => signed_object.signing_time().map(|t| t.to_utc()),
+            Ok(signed_object)  => signed_object.signing_time().to_utc(),
             Err(_) => return None,
         };
 
@@ -129,10 +129,7 @@ impl Manifest {
 fn cms_signing_time(content: &[u8]) -> PyResult<Option<i64>> {
     // Placeholder for CMS signing time functionality
     if let Ok(signed_object) = SignedObject::decode(content, false) {
-        match signed_object.signing_time() {
-            Some(time) => return Ok(Some(time.timestamp())),
-            None => return Ok(None),
-        }
+        return Ok(Some(signed_object.signing_time().timestamp()));
     }
     Ok(None)
 }
