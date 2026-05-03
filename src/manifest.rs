@@ -69,7 +69,7 @@ pub struct Manifest {
 #[pymethods]
 impl Manifest {
     #[staticmethod]
-    fn from_content(content: &[u8]) -> Option<Manifest> {
+    pub(crate) fn from_content(content: &[u8]) -> Option<Manifest> {
         let signing_time = match SignedObject::decode(content, false) {
             Ok(signed_object)  => signed_object.signing_time().to_utc(),
             Err(_) => return None,
