@@ -12,5 +12,5 @@ crate-type = ["cdylib"]
 anyhow = "1.0.102"
 chrono = "0.4.41"
 num-bigint = "0.4.6"
-pyo3 = { version = "0.28.3", features = ["chrono", "num-bigint"]  }
+pyo3 = { version = "0.28.3", features = ["chrono", "num-bigint", "experimental-inspect"]  }
 rpki = { version = "0.19.2", features = ["repository"] }

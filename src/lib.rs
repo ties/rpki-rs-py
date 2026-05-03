@@ -6,19 +6,22 @@ use anyhow::{anyhow, bail};
 use pyo3::{exceptions::PyValueError, prelude::*};
 use rpki::repository::sigobj::SignedObject;
 
-use crate::{manifest::Manifest, repository::RpkiObjectType};
+use crate::{crl::Crl, manifest::Manifest, repository::RpkiObjectType};
 
 mod repository;
 mod manifest;
+mod crl;
 
 enum ParsedRpkiObject {
-    Manifest(Manifest)
+    Manifest(Manifest),
+    Crl(Crl),
 }
 
 impl ParsedRpkiObject {
     fn into_py_any(self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         match self {
             ParsedRpkiObject::Manifest(inner) => Ok(Py::new(py, inner)?.into()),
+            ParsedRpkiObject::Crl(inner) => Ok(Py::new(py, inner)?.into())
         }
     }
 }
@@ -30,13 +33,13 @@ impl ParsedRpkiObject {
 /// * `filename` - name of the file.
 /// * `data` - content of the file.
 /// 
-/// 
 fn parse_blob(filename: &str, data: &[u8]) -> Result<ParsedRpkiObject, anyhow::Error> {
     let file_type = RpkiObjectType::from_str(filename)
         .map_err(|e| anyhow!(e))?;
 
     match file_type {
-        RpkiObjectType::Manifest => Manifest::from_content(data).map(|m| ParsedRpkiObject::Manifest(m)).ok_or(anyhow!("Could not parse data.")),
+        RpkiObjectType::Manifest => Manifest::from_content(data).map(|m| ParsedRpkiObject::Manifest(m)).ok_or(anyhow!("Could not parse manifest")),
+        RpkiObjectType::Crl => Crl::from_content(data).map(|c| ParsedRpkiObject::Crl(c)).ok_or(anyhow!("Could not parse crl")),
         _ => bail!("Unsupported type")
 
     }
