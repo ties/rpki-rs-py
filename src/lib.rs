@@ -3,6 +3,8 @@ use num_bigint::BigInt;
 use pyo3::prelude::*;
 use rpki::repository::sigobj::SignedObject;
 
+mod repository;
+
 #[pyclass(skip_from_py_object,frozen, eq, hash)]
 #[derive(Clone, PartialEq, Hash)]
 /// Represents a file in a RPKI manifest.
