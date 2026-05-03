@@ -20,3 +20,16 @@ def test_parse__crl():
         assert crl.this_update == datetime.datetime(2026, 5, 3, 14, 00, 49, tzinfo=datetime.timezone.utc)
         # nextUpdate utcTime Time UTCTime 2026-05-04 14:00:49 UTC
         assert crl.next_update == datetime.datetime(2026, 5, 4, 14, 0, 49, tzinfo=datetime.timezone.utc)
+
+
+def test_parse_cert():
+    data = Path(__file__).parent / "data/_0cFo2PcHY0OpRybmh7L04B70FQ.cer"
+    with data.open("rb") as f:
+        cert = rpki_rs.parse(f.name, f.read())
+
+        assert cert.serial_number == 140017544980660388417784593703853101077576
+        # notBefore utcTime Time UTCTime 2026-01-01 12:17:56 UTCOffset: 103
+        assert cert.not_before == datetime.datetime(2026, 1, 1, 12, 17, 56, tzinfo=datetime.timezone.utc)
+        # notAfter utcTime Time UTCTime 2027-07-01 00:00:00 UTC
+        assert cert.not_after == datetime.datetime(2027, 7, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+

@@ -1,20 +1,6 @@
-use std::any::Any;
-
 use chrono::{DateTime, Utc};
 use num_bigint::BigInt;
 use pyo3::prelude::*;
-
-#[pyclass(skip_from_py_object,frozen, eq, hash)]
-#[derive(Clone, PartialEq, Hash)]
-/// Represents a file in a RPKI manifest.
-struct RevokedCert {
-    /// The file name.
-    #[pyo3(get)]
-    file: String,
-    /// The file hash.
-    #[pyo3(get)]
-    hash: Vec<u8>,
-}
 
 #[pyclass(frozen, eq, hash, sequence)]
 #[derive(PartialEq, Hash)]
