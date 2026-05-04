@@ -3,7 +3,7 @@ use num_bigint::BigInt;
 use pyo3::prelude::*;
 use rpki::repository::sigobj::SignedObject;
 
-#[pyclass(skip_from_py_object,frozen, eq, hash)]
+#[pyclass(skip_from_py_object, frozen, eq, hash)]
 #[derive(Clone, PartialEq, Hash)]
 /// Represents a file in a RPKI manifest.
 struct FileAndHash {
@@ -18,14 +18,14 @@ struct FileAndHash {
 #[pymethods]
 impl FileAndHash {
     fn __repr__(&self) -> String {
-        let mut buf = [0u8; 256/4];
+        let mut buf = [0u8; 256 / 4];
         let hex_str = rpki::util::hex::encode(&self.hash, &mut buf);
         format!("FileAndHash(file={}, hash={})", self.file, hex_str)
     }
 }
 
 /// Represents a RPKI manifest. Sample:
-/// 
+///
 /// Subject key identifier:   0B:E6:AF:F6:EA:FE:D9:15:7B:40:63:BD:4F:F7:26:88:A3:FA:E3:06
 /// Authority key identifier: 17:8D:D5:1D:7E:40:B3:4B:43:9F:8F:DF:4D:05:14:11:C5:34:72:EA
 /// Certificate issuer:       /CN=178dd51d7e40b34b439f8fdf4d051411c53472ea
@@ -69,46 +69,50 @@ pub struct Manifest {
 #[pymethods]
 impl Manifest {
     /// Creates and returns a manifest from raw content bytes.
-    /// 
+    ///
     /// # Arguments:
-    /// 
+    ///
     /// * `content` - the raw bytes of the Manifest
     #[staticmethod]
     pub(crate) fn from_content(content: &[u8]) -> Option<Manifest> {
         let signing_time = match SignedObject::decode(content, false) {
-            Ok(signed_object)  => signed_object.signing_time().to_utc(),
+            Ok(signed_object) => signed_object.signing_time().to_utc(),
             Err(_) => return None,
         };
 
         if let Ok(mft) = rpki::repository::Manifest::decode(content, false) {
             let cert = mft.cert();
             let ski = cert.subject_key_identifier().as_slice().to_vec();
-            let aki = cert.authority_key_identifier().map(|aki| aki.as_slice().to_vec());
+            let aki = cert
+                .authority_key_identifier()
+                .map(|aki| aki.as_slice().to_vec());
 
             let issuer_aia = cert.ca_issuer().map(|issuer| issuer.to_string());
             let mft_sia = cert.signed_object().map(|sia| sia.to_string());
 
-            let manifest_number = BigInt::from_bytes_be(num_bigint::Sign::Plus, &mft.content().manifest_number().into_array());
-
-            let file_list: Vec<FileAndHash> = mft.content().iter().map(|entry|
-                FileAndHash {
+            let file_list: Vec<FileAndHash> = mft
+                .content()
+                .iter()
+                .map(|entry| FileAndHash {
                     // Convert &Bytes to String using std::str::from_utf8 and to_string
                     file: std::str::from_utf8(entry.file().as_ref())
                         .unwrap_or_default()
                         .to_string(),
                     hash: entry.hash().to_vec(),
-            }).collect();
-
+                })
+                .collect();
 
             return Some(Manifest {
+                manifest_number: mft.manifest_number().into(),
+
+                signing_time,
+
                 ski,
                 aki,
-                signing_time,
                 this_update: mft.this_update().to_utc(),
                 next_update: mft.next_update().to_utc(),
                 aia: issuer_aia,
                 sia: mft_sia,
-                manifest_number,
                 file_list,
             });
         }
@@ -123,7 +127,9 @@ impl Manifest {
         if index < self.file_list.len() {
             Ok(self.file_list[index].clone())
         } else {
-            Err(pyo3::exceptions::PyIndexError::new_err("Index out of range"))
+            Err(pyo3::exceptions::PyIndexError::new_err(
+                "Index out of range",
+            ))
         }
     }
 }

@@ -34,4 +34,4 @@ jobs:
       - name: Install maturin
         run: uv tool install maturin
       - name: Test with python ${{ matrix.python-version }}
-        run: uv run --frozen pytest 
+        run: uv run --frozen pytest
