@@ -5,24 +5,31 @@ from pathlib import Path
 import rpki_rs
 
 
-def test_parse__manifest():
-    data = Path(__file__).parent / "data/F43VHX5As0tDn4_fTQUUEcU0cuo.mft"
+def test_parse_aspa():
+    data = Path(__file__).parent / "data/o1qu9kAQGyrDid3Spblf5v3dgGE.asa"
     with data.open("rb") as f:
-        mft = rpki_rs.parse(f.name, f.read())
-        # Other field parsing already covered in test_manifest_parsing.py - this covers the generic parse function.
-        assert mft.signing_time == datetime.datetime(
-            2025, 6, 4, 23, 0, 27, tzinfo=datetime.timezone.utc
+        aspa = rpki_rs.parse(f.name, f.read())
+
+        assert aspa.serial_number == 140634067609421699249212042701971768582440
+        # rpki-client prints timezone by accident
+        # Signing time:             Wed 01 Apr 2026 13:51:25 +0100
+        assert aspa.signing_time == datetime.datetime(
+            2026, 4, 1, 13, 51, 25, tzinfo=datetime.timezone.utc
         )
-        assert [(entry.file, entry.hash) for entry in mft.file_list] == [
-            (
-                "F43VHX5As0tDn4_fTQUUEcU0cuo.crl",
-                base64.b64decode("V7e8KEOIOLS0abcZBUFNanWqhhrWh/xmpE1SaNHx8JE="),
-            ),
-            (
-                "sY0r0y4AruQYBO-qa1jtodSMRJI.roa",
-                base64.b64decode("fgiZ0pPukyfp5f/cG9pJMs5XjY+lIWQ3prMocyZ72Vo="),
-            ),
-        ]
+        # ASPA not before:          Wed 01 Apr 2026 13:51:25 +0100
+        assert aspa.not_before == datetime.datetime(
+            2026, 4, 1, 13, 51, 25, tzinfo=datetime.timezone.utc
+        )
+        # ASPA not after:           Thu 01 Jul 2027 00:00:00 +0100
+        assert aspa.not_after == datetime.datetime(
+            2027, 7, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+        )
+
+        # Customer ASID:            212966
+        assert aspa.customer_as == 212966
+        # Providers:                AS: 47447
+        #                           AS: 200461
+        assert aspa.providers == [47447, 200461]
 
 
 def test_parse__crl():
@@ -63,28 +70,21 @@ def test_parse_cert():
         )
 
 
-def test_parse_aspa():
-    data = Path(__file__).parent / "data/o1qu9kAQGyrDid3Spblf5v3dgGE.asa"
+def test_parse__manifest():
+    data = Path(__file__).parent / "data/F43VHX5As0tDn4_fTQUUEcU0cuo.mft"
     with data.open("rb") as f:
-        aspa = rpki_rs.parse(f.name, f.read())
-
-        assert aspa.serial_number == 140634067609421699249212042701971768582440
-        # rpki-client prints timezone by accident
-        # Signing time:             Wed 01 Apr 2026 13:51:25 +0100
-        assert aspa.signing_time == datetime.datetime(
-            2026, 4, 1, 13, 51, 25, tzinfo=datetime.timezone.utc
+        mft = rpki_rs.parse(f.name, f.read())
+        # Other field parsing already covered in test_manifest_parsing.py - this covers the generic parse function.
+        assert mft.signing_time == datetime.datetime(
+            2025, 6, 4, 23, 0, 27, tzinfo=datetime.timezone.utc
         )
-        # ASPA not before:          Wed 01 Apr 2026 13:51:25 +0100
-        assert aspa.not_before == datetime.datetime(
-            2026, 4, 1, 13, 51, 25, tzinfo=datetime.timezone.utc
-        )
-        # ASPA not after:           Thu 01 Jul 2027 00:00:00 +0100
-        assert aspa.not_after == datetime.datetime(
-            2027, 7, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
-        )
-
-        # Customer ASID:            212966
-        assert aspa.customer_as == 212966
-        # Providers:                AS: 47447
-        #                           AS: 200461
-        assert aspa.providers == [47447, 200461]
+        assert [(entry.file, entry.hash) for entry in mft.file_list] == [
+            (
+                "F43VHX5As0tDn4_fTQUUEcU0cuo.crl",
+                base64.b64decode("V7e8KEOIOLS0abcZBUFNanWqhhrWh/xmpE1SaNHx8JE="),
+            ),
+            (
+                "sY0r0y4AruQYBO-qa1jtodSMRJI.roa",
+                base64.b64decode("fgiZ0pPukyfp5f/cG9pJMs5XjY+lIWQ3prMocyZ72Vo="),
+            ),
+        ]
