@@ -6,14 +6,19 @@ use anyhow::{anyhow, bail};
 use pyo3::{exceptions::PyValueError, prelude::*};
 use rpki::repository::sigobj::SignedObject;
 
-use crate::{cert::Cert, crl::Crl, manifest::Manifest, repository::RpkiObjectType};
+use crate::{aspa::Aspa, cert::Cert, crl::Crl, manifest::Manifest, repository::RpkiObjectType, util::extract_signing_time};
 
 mod repository;
-mod manifest;
+
+mod aspa;
 mod crl;
 mod cert;
+mod manifest;
+mod roa;
+mod util;
 
 enum ParsedRpkiObject {
+    Aspa(Aspa),
     Manifest(Manifest),
     Crl(Crl),
     Certificate(Cert),
@@ -22,9 +27,10 @@ enum ParsedRpkiObject {
 impl ParsedRpkiObject {
     fn into_py_any(self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         match self {
-            ParsedRpkiObject::Manifest(inner) => Ok(Py::new(py, inner)?.into()),
+            ParsedRpkiObject::Aspa(inner) => Ok(Py::new(py, inner)?.into()),
+            ParsedRpkiObject::Certificate(inner) => Ok(Py::new(py, inner)?.into()),
             ParsedRpkiObject::Crl(inner) => Ok(Py::new(py, inner)?.into()),
-            ParsedRpkiObject::Certificate(inner) => Ok(Py::new(py, inner)?.into())
+            ParsedRpkiObject::Manifest(inner) => Ok(Py::new(py, inner)?.into()),
         }
     }
 }
@@ -41,9 +47,10 @@ fn parse_blob(filename: &str, data: &[u8]) -> Result<ParsedRpkiObject, anyhow::E
         .map_err(|e| anyhow!(e))?;
 
     match file_type {
-        RpkiObjectType::Manifest => Manifest::from_content(data).map(|m| ParsedRpkiObject::Manifest(m)).ok_or(anyhow!("Could not parse manifest")),
-        RpkiObjectType::Crl => Crl::from_content(data).map(|c| ParsedRpkiObject::Crl(c)).ok_or(anyhow!("Could not parse crl")),
+        RpkiObjectType::Aspa => Aspa::from_content(data).map(|a| ParsedRpkiObject::Aspa(a)).ok_or(anyhow!("Could not parse ASPA")),
         RpkiObjectType::Cert => Cert::from_content(data).map(|cert| ParsedRpkiObject::Certificate(cert)).ok_or(anyhow!("Could not parse certificate")),
+        RpkiObjectType::Crl => Crl::from_content(data).map(|c| ParsedRpkiObject::Crl(c)).ok_or(anyhow!("Could not parse crl")),
+        RpkiObjectType::Manifest => Manifest::from_content(data).map(|m| ParsedRpkiObject::Manifest(m)).ok_or(anyhow!("Could not parse manifest")),
         _ => bail!("Unsupported type")
 
     }
@@ -65,11 +72,7 @@ fn parse(py: Python<'_>, filename: &str, data: &[u8]) -> PyResult<Py<PyAny>> {
 /// * `content` - The raw CMS content
 #[pyfunction]
 fn cms_signing_time(content: &[u8]) -> PyResult<Option<i64>> {
-    // Placeholder for CMS signing time functionality
-    if let Ok(signed_object) = SignedObject::decode(content, false) {
-        return Ok(Some(signed_object.signing_time().timestamp()));
-    }
-    Ok(None)
+    Ok(extract_signing_time(content).map(|st| st.timestamp()))
 }
 
 /// A Python module implemented in Rust.

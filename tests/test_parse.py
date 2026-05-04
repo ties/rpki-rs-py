@@ -33,3 +33,23 @@ def test_parse_cert():
         # notAfter utcTime Time UTCTime 2027-07-01 00:00:00 UTC
         assert cert.not_after == datetime.datetime(2027, 7, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
+
+def test_parse_aspa():
+    data = Path(__file__).parent / "data/o1qu9kAQGyrDid3Spblf5v3dgGE.asa"
+    with data.open("rb") as f:
+        aspa = rpki_rs.parse(f.name, f.read())
+
+        assert aspa.serial_number == 140634067609421699249212042701971768582440
+        # rpki-client prints timezone by accident
+        # Signing time:             Wed 01 Apr 2026 13:51:25 +0100
+        assert aspa.signing_time == datetime.datetime(2026, 4, 1, 13, 51, 25, tzinfo=datetime.timezone.utc)
+        # ASPA not before:          Wed 01 Apr 2026 13:51:25 +0100
+        assert aspa.not_before == datetime.datetime(2026, 4, 1, 13, 51, 25, tzinfo=datetime.timezone.utc)
+        # ASPA not after:           Thu 01 Jul 2027 00:00:00 +0100
+        assert aspa.not_after == datetime.datetime(2027, 7, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+        # Customer ASID:            212966
+        assert aspa.customer_as ==  212966
+        # Providers:                AS: 47447
+        #                           AS: 200461
+        assert aspa.providers == [47447, 200461]
